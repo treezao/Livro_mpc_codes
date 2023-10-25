@@ -11,7 +11,7 @@ z = tf('z',Ts); % variável z da Transformada-Z
 
 Nss = 66; % horizonte de modelo
 
-g = step(G,Ts:1:Nss*Ts); % obtendo os coeficientes da resposta ao degrau unitário
+g = step(G,Ts:Ts:Nss*Ts); % obtendo os coeficientes da resposta ao degrau unitário
 h = g - [0;g(1:end-1)] ; % obtendo os coeficientes da resposta ao impulso unitário
 
 
