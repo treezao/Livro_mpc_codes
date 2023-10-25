@@ -7,7 +7,7 @@ clc
 run('../../../Bibliotecas/parametrosFiguras.m')
 
 %% caso DMC
-exemplo_dmc
+PARTE1_dmc
 
 saidasDMC = saidas;
 entradasDMC = entradas;
@@ -17,7 +17,7 @@ vxDMC = vx;
 
 
 %% caso GDMC
-exemplo_gdmc
+PARTE1_gdmc
 
 saidasGDMC = saidas;
 entradasGDMC = entradas;
