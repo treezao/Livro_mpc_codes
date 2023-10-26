@@ -20,10 +20,6 @@ nb = size(num,2)-2; % ordem do numerador
 dd = Gz.inputdelay; % atraso discreto
 
 
-Nss=80;
-
-Gcoef = step(G,Ts:Ts:Nss*Ts);
-
 %% parâmetros de ajuste
 
 N1 = 11; %horizonte de predição inicial
@@ -33,6 +29,10 @@ Nu = 5; % horizonte de controle
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
+
+Nss=80; % horizonte de modelo
+
+Gcoef = step(G,Ts:Ts:Nss*Ts); % coeficientes da resposta ao degrau
 
 %% montando as matrizes do DMC recursivo
 

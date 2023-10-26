@@ -3,14 +3,18 @@
 clc
 
 run('../../../Bibliotecas/parametrosFiguras.m')
-global Kdmc1 Nf H N
 %%
 s = tf('s');
 Ts = 1; % perído de amostragem em minutos
 
 z = tf('z',Ts);
 Gz = 0.1/(z-1.1)/z^2; % modelo discretizado
-Gs = d2c(0.1/(z-1.1),'zoh')*exp(-2*Ts*s); % modelo contínuo
+num = Gz.num{1}; % numerador do modelo discreto
+den = Gz.den{1}; % denominador do modelo discreto
+na = size(den,2)-1; % ordem do denominador
+nb = size(num,2)-2; % ordem do numerador
+dd = Gz.inputdelay; % atraso discreto
+
 
 
 %% parâmetros de ajuste
@@ -24,12 +28,9 @@ delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
 Nss=80; % horizonte de modelo
-Nf = 40; % horizonte de modelo filtrado
+Nf = 20; % horizonte de modelo filtrado
 betaf = 0.8; % polo do filtro do gdmc
 Gcoef = step(Gz,Ts:Ts:Nss*Ts);
-
-tsim = 150*Ts;
-
 %% montando as matrizes do DMC
 
 G = zeros(N2,Nu);
@@ -87,45 +88,72 @@ for i=N1(1):N2(1)
 end
 H = H1-H2
 
-%%
-clear gdmc_simulink
-sim_res = sim('PARTE2_sim_gdmc.slx')
+%% inicialização vetores
+nin = max(Nss,Nf)+1;
+nit = 150 + nin; % número de iterações da simulação
 
-%%
-tout = sim_res.sim_output.time;
-stout= size(tout,1)
-np = 500;
-if(stout>np)
-    ind = 1:round(stout/np):stout;
+entradas = 0*ones(nit,1); % vetor o sinal de controle
+du = zeros(nit,1); % vetor de incrementos de controle
+
+saidas = 0*ones(nit,1); % vetor com as saídas do sistema
+
+perts = zeros(nit,1); % vetor com as perturbações do sistema
+perts(nin+round(100/Ts):end) = 0.5;
+
+refs = 0*ones(nit,1); % vetor de referências
+refs(nin+round(4/Ts):end) = 1;
+
+
+erro = zeros(nit,1); % vetor de erros
+yfilt = zeros(nit,N(1)); % vetor com as saidas filtras
+
+
+%% simulação sem filtro de referência
+for k = nin:nit
+    %% modelo processo, não mexer
+    saidas(k) = -den(2:end)*saidas(k-1:-1:k-na) + num*(entradas(k-dd:-1:k-nb-dd-1) + perts(k-dd:-1:k-dd-nb-1));
+    
+    erro(k) = refs(k)-saidas(k);
+    
+    %% -- Controlador GDMC 
+    %%% referencias
+    R = refs(k)*ones(N,1);
+    
+    %%% calculo da resposta livre
+    for i=1:N(1)
+        yfilt(k,i) = -F(i,1).den{1}(2:end)*yfilt(k-1:-1:k-nf,i) + F(i,1).num{1}*saidas(k:-1:k-nf);
+    end
+    
+    f = H*du(k-1:-1:k-Nf) + yfilt(k,:)';
+    
+    %% Resolve o problema de otimização
+    du(k) = Kdmc1*(R-f);
+    entradas(k) = entradas(k-1)+du(k);
+    
 end
-tout2 = tout(ind);
-ref = sim_res.sim_output.signals(1).values(ind);
-yGDMC2 = sim_res.sim_output.signals(2).values(ind);
 
-tin2 = sim_res.sim_in.time;
-uGDMC2 = sim_res.sim_in.signals(1).values;
+%% plots
+t = ((nin:nit)-nin)*Ts;
+vx = nin:nit;
 
-
-%% plota figura
 cores = gray(3);
 cores = cores(1:end-1,:);
 
+
 hf = figure
 h=subplot(2,1,1)
-plot(tout2,yGDMC2,'LineWidth',tamlinha,'Color',cores(1,:))
+plot(t,saidas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
-plot(tout2,ref,'--','LineWidth',tamlinha,'Color',cores(2,:))
+plot(t,refs(vx),'--','LineWidth',tamlinha,'Color',cores(2,:))
 ylim([0 1.6])
 h.YTick = [0 0.5 1 1.5];
-hl = legend('GDMC Ordem 2','Referência','Referência','Location','NorthEast')
-% hl.Position = [0.6785 0.7018 0.2368 0.1136];
+hl = legend('GDMC','Referência','Location','NorthEast')
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 grid on
 
 h = subplot(2,1,2)
-plot(tin2,uGDMC2,'LineWidth',tamlinha,'Color',cores(1,:))
-hold on
+plot(t,entradas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
 h.YTick = [-2 -1 0 1 2]
 ylim([-2.5 2])
 
@@ -137,7 +165,7 @@ set(h, 'FontSize', tamletra);
 
 
 hf.Position = tamfigura;
-hl.Position = [0.6720 0.4895 0.2625 0.1242];
+hl.Position = [0.7202 0.4960 0.2054 0.1242]
 
 
 

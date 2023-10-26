@@ -16,10 +16,6 @@ nb = size(num,2)-2; % ordem do numerador
 dd = Gz.inputdelay; % atraso discreto
 
 
-Nss=80; % horizonte de modelo
-Nf = 40; % horizonte de modelo filtrado
-
-Gcoef = step(Gz,Ts:Ts:2*Nss*Ts);
 %% parâmetros de ajuste
 
 N1 = 3; %horizonte de predição inicial
@@ -30,6 +26,9 @@ Nu = 5; % horizonte de controle
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
+Nf = 40; % horizonte de modelo filtrado
+Nss=80; % horizonte de modelo
+Gcoef = step(Gz,Ts:Ts:2*Nss*Ts);
 
 %% montando as matrizes do DMC
 

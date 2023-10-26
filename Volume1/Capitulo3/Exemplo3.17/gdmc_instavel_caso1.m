@@ -8,7 +8,7 @@ s = tf('s');
 Ts = 1; % perído de amostragem em minutos
 
 z = tf('z',Ts);
-Gz = 0.1/(z-1.1)/z^2; % modelo discretizado
+Gz = 0.05/(z-0.95)*0.1/(z-1.1)/z^2; % modelo discretizado
 num = Gz.num{1}; % numerador do modelo discreto
 den = Gz.den{1}; % denominador do modelo discreto
 na = size(den,2)-1; % ordem do denominador
@@ -25,9 +25,9 @@ Nu = 5; % horizonte de controle
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
-Nf = 40; % horizonte de modelo filtrado
-betaf = 0.8; % polo do filtro do gdmc
+Nf = 70; % horizonte de modelo filtrado
 Nss=80; % horizonte de modelo
+betaf = 0.9; % polo do filtro do GDMC
 Gcoef = step(Gz,Ts:Ts:2*Nss*Ts);
 
 %% montando as matrizes do DMC
@@ -50,23 +50,25 @@ Kdmc = inv(G'*Qy*G+Qu)*G'*Qy
 Kdmc1 = Kdmc(1,:);
 
 %%% cálculo dos filtros dos erros de predição (SISO) para o GDMC
-
 F = tf(0,1,Ts);
-nf = 2; %ordem do filtro
+nf = 2;
 
-pz = 1.1; % obtem o polo indesejado (instável) de malha aberta
+pz1 = 1.1; % obtem o polo indesejado (instável) de malha aberta
+pz2 = 0.95;
 
 for i=N1(1):N2(1)
     %%% monta sistema para obtenção dos parâmetros do filtro
     %%% primeira equação (z^i - F_i(z) = 0 -> para z=pz
     %%% segunda equação F_i(1) = 0 -> força ganho unitário
     indf = i-N1(1)+1;
-    Af = [pz^2 pz;
-          1 1];
-    bf = [pz^i*(pz-betaf)^2;
+    Af = [pz1^2 pz1 1;
+          pz2^2 pz2 1;
+          1 1 1];
+    bf = [pz1^i*(pz1-betaf)^2;
+          pz2^i*(pz2-betaf)^2;
           (1-betaf)^2];
     X = Af\bf;
-    F(indf,1) = (X(1)*z^2+X(2)*z)/(z-betaf)^2;
+    F(indf,1) = (X(1)*z^2+X(2)*z+X(3))/(z-betaf)^2;
     %%% teste da condição
 %     pz^i-(X(1)*pz+X(2))/(pz-betaf)^2
 
@@ -89,7 +91,7 @@ H = H1-H2
 
 %% inicialização vetores
 nin = max(Nss,Nf)+1;
-nit = 150 + nin; % número de iterações da simulação
+nit = 250 + nin; % número de iterações da simulação
 
 entradas = 0*ones(nit,1); % vetor o sinal de controle
 du = zeros(nit,1); % vetor de incrementos de controle
@@ -144,8 +146,8 @@ h=subplot(2,1,1)
 plot(t,saidas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t,refs(vx),'--','LineWidth',tamlinha,'Color',cores(2,:))
-ylim([0 1.6])
-h.YTick = [0 0.5 1 1.5];
+% ylim([0 1.6])
+h.YTick = [0 0.5 1 1.5 2];
 hl = legend('GDMC','Referência','Location','NorthEast')
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
@@ -153,8 +155,8 @@ grid on
 
 h = subplot(2,1,2)
 plot(t,entradas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
-h.YTick = [-2 -1 0 1 2]
-ylim([-2.5 2])
+% h.YTick = [-2 -1 0 1 2]
+% ylim([-2.5 2])
 
 ylabel('Manipulada','FontSize', tamletra)
 grid on

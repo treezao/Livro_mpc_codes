@@ -12,10 +12,7 @@ z = tf('z',Ts);
 Gz = 0.1/(z-1.1)/z^2; % modelo discretizado
 Gs = d2c(0.1/(z-1.1),'zoh')*exp(-2*Ts*s); % modelo contínuo
 
-Nss=80; % horizonte de modelo
-Nf = 40; % horizonte de modelo filtrado
 
-Gcoef = step(Gz,Ts:Ts:Nss*Ts);
 %% parâmetros de ajuste
 
 N1 = 3; %horizonte de predição inicial
@@ -26,6 +23,10 @@ Nu = 5; % horizonte de controle
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
+Nss=80; % horizonte de modelo
+Nf = 40; % horizonte de modelo filtrado
+betaf = 0.8; % polo do filtro do gdmc
+Gcoef = step(Gz,Ts:Ts:Nss*Ts);
 
 tsim = 150*Ts;
 
@@ -49,7 +50,6 @@ Kdmc = inv(G'*Qy*G+Qu)*G'*Qy
 Kdmc1 = Kdmc(1,:);
 
 %%% cálculo dos filtros dos erros de predição (SISO) para o GDMC
-betaf = 0.8; % formato do filtro (az+b)/(z-betaf)^2
 
 F = tf(0,1,Ts);
 nf = 1;

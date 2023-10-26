@@ -21,7 +21,7 @@ yfilt = ent(2:end);
 %%% resposta livre
 f = H*dup + yfilt;
     
-%% Resolve o problema de otimização
+%% Resolve o problema de otimização sem restrições
 du = Kdmc1*(r*ones(N,1) - f);
 u = uant + du;
 

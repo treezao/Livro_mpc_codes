@@ -9,6 +9,7 @@ Ts = 1; % perído de amostragem em minutos
 
 z = tf('z',Ts);
 Gz = 0.1/(z-1.1)/z^2; % modelo discretizado
+Gqz = 0.15/(z-0.95); % modelo da perturbação Q2
 num = Gz.num{1}; % numerador do modelo discreto
 den = Gz.den{1}; % denominador do modelo discreto
 na = size(den,2)-1; % ordem do denominador
@@ -28,7 +29,7 @@ lambda = 1; % ponderação do esforço de controle
 Nf = 40; % horizonte de modelo filtrado
 betaf = 0.8; % polo do filtro do gdmc
 Nss=80; % horizonte de modelo
-Gcoef = step(Gz,Ts:Ts:2*Nss*Ts);
+Gcoef = step(Gz,Ts:Ts:2*Nss*Ts); % coeficientes da resposta ao degrau
 
 %% montando as matrizes do DMC
 
@@ -72,7 +73,6 @@ for i=N1(1):N2(1)
 
     %%% armazena coeficientes gtil
     modDegrauUF{i} = filter(F(indf,1).num{1},F(indf,1).den{1},Gcoef);
-
 end
 
 
@@ -96,22 +96,28 @@ du = zeros(nit,1); % vetor de incrementos de controle
 
 saidas = 0*ones(nit,1); % vetor com as saídas do sistema
 
-perts = zeros(nit,1); % vetor com as perturbações do sistema
-perts(nin+round(100/Ts):end) = 0.5;
+perts = zeros(nit,2); % vetor com as perturbações do sistema
+perts(nin+round(50/Ts):end,1) = 0.2;
+perts(nin+round(100/Ts):end,2) = 0.1;
 
 refs = 0*ones(nit,1); % vetor de referências
-refs(nin+round(4/Ts):end) = 1;
+refs(nin+round(4/Ts):end) = 0.5;
 
 
 erro = zeros(nit,1); % vetor de erros
 yfilt = zeros(nit,N(1)); % vetor com as saidas filtras
+%% numeradores e denominadores das funções de transferência
+Az = conv(Gz.den{1},Gqz.den{1});
+Bz = conv(Gz.num{1},Gqz.den{1});
+Bqz = conv(Gqz.num{1},Gz.den{1});
 
+na1 = size(Az,2)-1;
 
 %% simulação sem filtro de referência
 for k = nin:nit
     %% modelo processo, não mexer
-    saidas(k) = -den(2:end)*saidas(k-1:-1:k-na) + num*(entradas(k-dd:-1:k-nb-dd-1) + perts(k-dd:-1:k-dd-nb-1));
-    
+    saidas(k) = -Az(2:end)*saidas(k-1:-1:k-na1) + Bz*(entradas(k:-1:k-na1)+perts(k:-1:k-na1,1))...
+                +Bqz*perts(k:-1:k-na1,2);   
     erro(k) = refs(k)-saidas(k);
     
     %% -- Controlador GDMC 
@@ -144,8 +150,8 @@ h=subplot(2,1,1)
 plot(t,saidas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t,refs(vx),'--','LineWidth',tamlinha,'Color',cores(2,:))
-ylim([0 1.6])
-h.YTick = [0 0.5 1 1.5];
+% ylim([0 1.6])
+% h.YTick = [0 0.5 1 1.5];
 hl = legend('GDMC','Referência','Location','NorthEast')
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
@@ -153,8 +159,8 @@ grid on
 
 h = subplot(2,1,2)
 plot(t,entradas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
-h.YTick = [-2 -1 0 1 2]
-ylim([-2.5 2])
+% h.YTick = [-2 -1 0 1 2]
+% ylim([-2.5 2])
 
 ylabel('Manipulada','FontSize', tamletra)
 grid on

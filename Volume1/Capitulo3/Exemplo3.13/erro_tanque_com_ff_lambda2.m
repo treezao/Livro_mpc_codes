@@ -19,11 +19,6 @@ nb = size(num,2)-2; % ordem do numerador
 dd = Gz.inputdelay; % atraso discreto
 
 
-Nss=100;
-
-Gcoef = step(G,Ts:Ts:Nss*Ts);
-Gqcoef = step(-G,0:Ts:Nss*Ts);
-
 %% parâmetros de ajuste
 
 N1 = 1; %horizonte de predição inicial
@@ -34,6 +29,10 @@ delta = 1; % ponderação do erro futuro
 lambda = 2; % ponderação do esforço de controle
 
 af=0.8; % constante de tempo do filtro de referência
+
+Nss=100; % horizonte de modelo
+Gcoef = step(G,Ts:Ts:Nss*Ts); % coeficientes da resposta ao degrau
+Gqcoef = step(-G,0:Ts:Nss*Ts); % coeficientes da resposta ao degrau para a perturbação
 
 %% montando as matrizes do DMC recursivo
 

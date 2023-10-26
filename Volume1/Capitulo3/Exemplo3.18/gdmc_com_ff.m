@@ -9,6 +9,7 @@ Ts = 1; % perído de amostragem em minutos
 
 z = tf('z',Ts);
 Gz = 0.1/(z-1.1)/z^2; % modelo discretizado
+Gqz = 0.15/(z-0.95); % modelo da perturbação Q2
 num = Gz.num{1}; % numerador do modelo discreto
 den = Gz.den{1}; % denominador do modelo discreto
 na = size(den,2)-1; % ordem do denominador
@@ -25,10 +26,12 @@ Nu = 5; % horizonte de controle
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
-Nf = 40; % horizonte de modelo filtrado
+Nf = 80; % horizonte de modelo filtrado
 betaf = 0.8; % polo do filtro do gdmc
 Nss=80; % horizonte de modelo
-Gcoef = step(Gz,Ts:Ts:2*Nss*Ts);
+Gcoef = step(Gz,Ts:Ts:2*Nss*Ts); % coeficientes da resposta ao degrau
+Gqcoef{1} = step(Gz,0:Ts:2*Nss*Ts); % coeficientes da resposta ao degrau da perturbação Q1
+Gqcoef{2} = step(Gqz,0:Ts:2*Nss*Ts); % coeficientes da resposta ao degrau da perturbação Q2
 
 %% montando as matrizes do DMC
 
@@ -72,6 +75,8 @@ for i=N1(1):N2(1)
 
     %%% armazena coeficientes gtil
     modDegrauUF{i} = filter(F(indf,1).num{1},F(indf,1).den{1},Gcoef);
+    modDegrauQF{i,1} = filter(F(indf,1).num{1},F(indf,1).den{1},Gqcoef{1});
+    modDegrauQF{i,2} = filter(F(indf,1).num{1},F(indf,1).den{1},Gqcoef{2});
 
 end
 
@@ -80,12 +85,27 @@ end
 H1 = [];
 H2 = [];
 
+H1q1 = [];
+H2q1 = [];
+
+H1q2 = [];
+H2q2 = [];
+
+
 for i=N1(1):N2(1)
     H1 = [H1;Gcoef(i+1:i+Nf)'];
     H2 = [H2;modDegrauUF{i}(1:Nf)'];
     
+    H1q1 = [H1q1;Gqcoef{1}(i+1:i+Nf+1)'];
+    H2q1 = [H2q1;modDegrauQF{i,1}(1:Nf+1)'];
+    
+    H1q2 = [H1q2;Gqcoef{2}(i+1:i+Nf+1)'];
+    H2q2 = [H2q2;modDegrauQF{i,2}(1:Nf+1)'];
+    
 end
 H = H1-H2
+Hq1 = H1q1-H2q1
+Hq2 = H1q2-H2q2
 
 %% inicialização vetores
 nin = max(Nss,Nf)+1;
@@ -93,37 +113,47 @@ nit = 150 + nin; % número de iterações da simulação
 
 entradas = 0*ones(nit,1); % vetor o sinal de controle
 du = zeros(nit,1); % vetor de incrementos de controle
+dq = zeros(nit,2); % vetor de incrementos das perturbações
 
 saidas = 0*ones(nit,1); % vetor com as saídas do sistema
 
-perts = zeros(nit,1); % vetor com as perturbações do sistema
-perts(nin+round(100/Ts):end) = 0.5;
+perts = zeros(nit,2); % vetor com as perturbações do sistema
+perts(nin+round(50/Ts):end,1) = 0.2;
+perts(nin+round(100/Ts):end,2) = 0.1;
 
 refs = 0*ones(nit,1); % vetor de referências
-refs(nin+round(4/Ts):end) = 1;
+refs(nin+round(4/Ts):end) = 0.5;
 
 
 erro = zeros(nit,1); % vetor de erros
 yfilt = zeros(nit,N(1)); % vetor com as saidas filtras
+%% numeradores e denominadores das funções de transferência
+Az = conv(Gz.den{1},Gqz.den{1});
+Bz = conv(Gz.num{1},Gqz.den{1});
+Bqz = conv(Gqz.num{1},Gz.den{1});
 
+na1 = size(Az,2)-1;
 
 %% simulação sem filtro de referência
 for k = nin:nit
     %% modelo processo, não mexer
-    saidas(k) = -den(2:end)*saidas(k-1:-1:k-na) + num*(entradas(k-dd:-1:k-nb-dd-1) + perts(k-dd:-1:k-dd-nb-1));
-    
+    saidas(k) = -Az(2:end)*saidas(k-1:-1:k-na1) + Bz*(entradas(k:-1:k-na1)+perts(k:-1:k-na1,1))...
+                +Bqz*perts(k:-1:k-na1,2);   
     erro(k) = refs(k)-saidas(k);
     
     %% -- Controlador GDMC 
     %%% referencias
     R = refs(k)*ones(N,1);
     
+    dq(k,:) = perts(k,:)-perts(k-1,:);
+    
     %%% calculo da resposta livre
     for i=1:N(1)
         yfilt(k,i) = -F(i,1).den{1}(2:end)*yfilt(k-1:-1:k-nf,i) + F(i,1).num{1}*saidas(k:-1:k-nf);
     end
     
-    f = H*du(k-1:-1:k-Nf) + yfilt(k,:)';
+    f = H*du(k-1:-1:k-Nf) + yfilt(k,:)' ...
+        + Hq1*dq(k:-1:k-Nf,1) + Hq2*dq(k:-1:k-Nf,2);
     
     %% Resolve o problema de otimização
     du(k) = Kdmc1*(R-f);
@@ -144,8 +174,8 @@ h=subplot(2,1,1)
 plot(t,saidas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t,refs(vx),'--','LineWidth',tamlinha,'Color',cores(2,:))
-ylim([0 1.6])
-h.YTick = [0 0.5 1 1.5];
+% ylim([0 1.6])
+% h.YTick = [0 0.5 1 1.5];
 hl = legend('GDMC','Referência','Location','NorthEast')
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
@@ -153,8 +183,8 @@ grid on
 
 h = subplot(2,1,2)
 plot(t,entradas(vx),'LineWidth',tamlinha,'Color',cores(1,:))
-h.YTick = [-2 -1 0 1 2]
-ylim([-2.5 2])
+% h.YTick = [-2 -1 0 1 2]
+% ylim([-2.5 2])
 
 ylabel('Manipulada','FontSize', tamletra)
 grid on
