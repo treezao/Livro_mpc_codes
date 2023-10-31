@@ -3,8 +3,8 @@ clear all
 close all
 clc
 
-addpath('../../Bibliotecas/')
-run('../../Bibliotecas/parametrosFiguras.m')
+addpath('../../../Bibliotecas/')
+run('../../../Bibliotecas/parametrosFiguras.m')
 %% carrega o ponto de operação
 pontoOperacao
 
