@@ -126,6 +126,5 @@ xlabel('Tempo (s)','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 
 hf.Position = tamfigura;
-print('gpc_estudo_caso_modeloDegrau_normalizado','-depsc')
 
 

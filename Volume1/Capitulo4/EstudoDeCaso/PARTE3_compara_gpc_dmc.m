@@ -8,7 +8,7 @@ addpath('../../../Bibliotecas/')
 run('../../../Bibliotecas/parametrosFiguras.m')
 
 %% caso 1
-PARTE2_gpc
+PARTE3_gpc
 
 saidas1 = saidas;
 entradas1 = entradas;
@@ -18,7 +18,7 @@ vx1 = vx;
 
 
 %% caso 2
-PARTE2_dmc
+PARTE3_dmc
 
 saidas2 = saidas;
 entradas2 = entradas;

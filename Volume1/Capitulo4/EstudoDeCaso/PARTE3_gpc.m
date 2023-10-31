@@ -30,11 +30,16 @@ nbq = size(Bq,2)-1; % ordem do polinômio Bq
 N1 = 1; %horizonte de predição inicial
 N2 = 30; % horizonte de predição final
 N = N2-N1+1; % horizonte de predição
-Nu = 10; % horizonte de controle
+Nu = 9; % horizonte de controle
 Nq = 0; % horizonte de perturbação
 
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
+
+umax = 0.54; % valor de controle máximo
+umin = 0; % valor de controle mínimo
+dumax = 0.05; % incremento de controle máximo
+dumin = -dumax; % incremento de controle mínimo
 
 
 %% montagem das matrizes
@@ -66,13 +71,24 @@ Gq = Gq(:,1:Nq);
 
 G,F,H,Gq,Hq
 
+
+
 %% obtenção do ganho irrestrito
 Qu = lambda*eye(Nu); % matriz de ponderação dos incrementos de controle
-Qe = delta*eye(N);  % matriz de ponderaão dos erros futuros
+Qy = delta*eye(N);  % matriz de ponderaão dos erros futuros
 
-Kmpc = (G'*Qe*G+Qu)\G'*Qe;
+Kmpc = (G'*Qy*G+Qu)\G'*Qy;
 
 Kmpc1 = Kmpc(1,:);
+
+%% matrizes para o caso com restrições
+Hqp = 2*(G'*Qy*G+Qu);
+fqp1 = -2*G'*Qy; 
+
+LB = repelem(dumin,Nu')';
+UB = repelem(dumax,Nu')';
+Rbar = tril(ones(Nu));
+Rbar = [Rbar;-Rbar];
 
 %% inicialização vetores
 nin = 5;
@@ -84,7 +100,7 @@ du = zeros(nit,1); % vetor de incrementos de controle
 saidas = h0+zeros(nit,1); % vetor com as saídas do sistema
 
 perts = as0+zeros(nit,1); % vetor com as perturbações do sistema
-perts(nin+75:end) = as0*1.3;
+perts(nin+75:end) = as0*1.5;
 
 refs = h0+zeros(nit,1); % vetor de referências
 refs(nin+10:end) = h0*1.1;
@@ -112,8 +128,15 @@ for k = nin:nit
     if(~isempty(Hq))
         f = f+ Hq*deltaQ;
     end        
+    
+    
     %% Resolve o problema de otimização
-    du(k) = Kmpc1*(R-f);
+    fqp = fqp1*(R-f);
+    
+    rbar = [repelem(umax-entradas(k-1),Nu)';
+             repelem(entradas(k-1)-umin,Nu)'];
+    X = quadprog(Hqp,fqp,Rbar,rbar,[],[],LB,UB);
+    du(k) = X(1);
     entradas(k) = entradas(k-1)+du(k);
     
 end
