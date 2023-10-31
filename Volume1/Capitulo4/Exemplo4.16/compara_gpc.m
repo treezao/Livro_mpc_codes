@@ -4,9 +4,10 @@ clear all,
 close all,
 clc
 
+addpath('../../../Bibliotecas/')
 run('../../../Bibliotecas/parametrosFiguras.m')
 
-%% caso DMC
+%% caso 1
 caso1_gpc
 
 saidas1 = saidas;
@@ -16,7 +17,7 @@ t1 = t;
 vx1 = vx;
 
 
-%% caso GDMC
+%% caso 2
 caso2_gpc
 
 saidas2 = saidas;

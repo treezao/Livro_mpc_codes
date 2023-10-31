@@ -2,6 +2,7 @@
 % close all, 
 clc
 
+addpath('../../../Bibliotecas/')
 run('../../../Bibliotecas/parametrosFiguras.m')
 %%
 Ts = 1; % período de amostragem

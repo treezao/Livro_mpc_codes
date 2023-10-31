@@ -8,7 +8,7 @@ addpath('../../../Bibliotecas/')
 run('../../../Bibliotecas/parametrosFiguras.m')
 
 %% caso 1
-caso1_gpc
+PARTE2_caso1_gpc
 
 saidas1 = saidas;
 entradas1 = entradas;
@@ -18,7 +18,7 @@ vx1 = vx;
 
 
 %% caso 2
-caso2_gpc
+PARTE2_caso2_pid
 
 saidas2 = saidas;
 entradas2 = entradas;
@@ -39,9 +39,9 @@ plot(t1,saidas1(vx1),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t2,saidas2(vx2),'-.','LineWidth',tamlinha,'Color',cores(2,:))
 plot(t2,refs(vx2),'--','LineWidth',tamlinha,'Color',cores(3,:))
-ylim([0 1.5])
+% ylim([0 1.5])
 % h.YTick = [0 0.5 1 1.5];
-hl = legend('Caso 1','Caso 2','Referência','Location','NorthEast')
+hl = legend('GPC','PID s/ AW','Referência','Location','NorthEast')
 % hl.Position = [0.6785 0.7018 0.2368 0.1136];
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);

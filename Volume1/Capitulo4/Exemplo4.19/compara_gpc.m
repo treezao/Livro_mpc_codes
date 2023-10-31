@@ -26,10 +26,21 @@ du2 = du;
 t2 = t;
 vx2 = vx;
 
+%% caso 3
+caso3_gpc
+
+saidas3 = saidas;
+entradas3 = entradas;
+du3 = du;
+t3 = t;
+vx3 = vx;
+
+
+
 %% figuras
 
 
-cores = gray(4);
+cores = gray(5);
 cores = cores(1:end-1,:);
 
 
@@ -38,10 +49,13 @@ h=subplot(3,1,1)
 plot(t1,saidas1(vx1),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t2,saidas2(vx2),'-.','LineWidth',tamlinha,'Color',cores(2,:))
-plot(t2,refs(vx2),'--','LineWidth',tamlinha,'Color',cores(3,:))
-ylim([0 1.5])
+plot(t3,saidas3(vx3),':','LineWidth',tamlinha,'Color',cores(3,:))
+
+
+plot(t2,refs(vx2),'--','LineWidth',tamlinha,'Color',cores(4,:))
+% ylim([0 1.5])
 % h.YTick = [0 0.5 1 1.5];
-hl = legend('Caso 1','Caso 2','Referência','Location','NorthEast')
+hl = legend('S/ Filtro','C/ Filtro','Referência','Location','NorthEast')
 % hl.Position = [0.6785 0.7018 0.2368 0.1136];
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
@@ -51,6 +65,8 @@ h = subplot(3,1,2)
 plot(t1,entradas1(vx1),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t2,entradas2(vx2),'-.','LineWidth',tamlinha,'Color',cores(2,:))
+plot(t3,entradas3(vx3),':','LineWidth',tamlinha,'Color',cores(3,:))
+
 % h.YTick = [-2 -1 0 1 2]
 % ylim([-2.5 2])
 
@@ -65,6 +81,7 @@ h = subplot(3,1,3)
 plot(t1,du1(vx1),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
 plot(t2,du2(vx2),'-.','LineWidth',tamlinha,'Color',cores(2,:))
+plot(t3,du3(vx3),':','LineWidth',tamlinha,'Color',cores(3,:))
 
 ylabel('\Delta u','FontSize', tamletra)
 xlabel('Tempo (amostras)','FontSize', tamletra)
