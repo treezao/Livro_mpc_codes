@@ -29,31 +29,35 @@ N2 = 15; % horizonte de predição final
 N = N2-N1+1; % horizonte de predição
 Nu = 5; % horizonte de controle
 
+C = [1 -0.8]; %polinômio C
+
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
 
 af = 0; % polo do filtro de referência
 
-umax = 1.2; % valor de controle máximo
-umin = -1.2; % valor de controle mínimo
-
 %% montagem das matrizes
 Btil = conv(B,[zeros(1,d) 1]); % incorporação do atraso no numerador B
 
-G = zeros(N,N); % matriz dinâmica G0
-H = zeros(N,nb+d); % matriz dos incrementos passados de controle 
+G = zeros(N,N); % matriz dinâmica G
+H = []; % matriz dos incrementos passados de controle 
 
-[E,F] = diofantina(conv(A,[1 -1]),N1,N2); % obtenção dos polinômios Ej, Fj
+[E,F] = diofantinaC(conv(A,[1 -1]),C,N1,N2);
 
 for i=N1:N2
     EjB = conv(E(i-N1+1,1:i),Btil);
     
-    G(i-N1+1,1:i) = EjB(i:-1:1);    
-    H(i-N1+1,:) = EjB(i+1:end);
-
+    [Mi,Ni] = diofantinaC(C,EjB,i,i);
+    
+    G(i-N1+1,1:i) = Mi(end:-1:1);    
+    H = [H;Ni];
+    
 end
 G = G(:,1:Nu);
 
+nF = size(F,2);
+nC = size(C,2);
+nH = size(H,2);
 
 G,F,H
 
@@ -67,24 +71,25 @@ Kmpc1 = Kmpc(1,:);
 
 %% obtenção do controlador equivalente
 delta = tf([1 -1],[1 0],-1)
-den1 = tf([1 Kmpc1*H],[1 zeros(1,size(Kmpc1*H,2))],-1)
-C1num = tf(sum(Kmpc1),1,-1)
-C2num = tf(Kmpc1*F,[1 zeros(1,size(Kmpc1*F,2)-1)],-1)
+filtroC = tf(C,[1 zeros(1,size(C,2)-1)],-1)
+den1c = filtroC+tf([0 Kmpc1*H],[1 zeros(1,size(Kmpc1*H,2))],-1)
+C1numc = tf(sum(Kmpc1),1,-1)*filtroC
+C2numc = tf(Kmpc1*F,[1 zeros(1,size(Kmpc1*F,2)-1)],-1)
 
 %%% controlador de realimentação
-Cr = minreal(C2num/den1/delta)
+Crc = minreal(C2numc/den1c/delta)
 
 %%% filtro de referência
-Fr = minreal(C1num/C2num)
+Frc = minreal(C1numc/C2numc)
 
 
 %%% Função de transferência de malha fechada com e sem filtro de referÊncia
-Hr = feedback(Cr*gz,1)
+Hrc = feedback(Crc*gz,1)
 
-Hrf = minreal(Hr*Fr)
+Hrfc = minreal(Hrc*Frc)
 
 %%% função de transferência de malha fechada para a perturbação
-Hq = minreal(feedback(1,Cr*gz)*gz)
+Hqc = minreal(feedback(1,Crc*gz)*gz)
 
 %% inicialização vetores
 nin = 10;
@@ -101,33 +106,41 @@ perts(nin+50:end) = 2;
 refs = 0*ones(nit,1); % vetor de referências
 refs(nin+10:end) = 1;
 
+saidasC = zeros(nit,1); % vetor de saídas filtradas por C(z)
+duC = zeros(nit,1); % vetor de incrementos de controle filtrados por C(z)
+
+
 rfant = 0;
-
-reffilt = zeros(nit,1);
-nfr = size(Fr.den{1},2)-1;
-
-ncr = size(Cr.den{1},2)-1;
 
 %% simulação sem filtro de referência
 for k = nin:nit
     %% modelo processo, não mexer
     saidas(k) = -A(2:end)*saidas(k-1:-1:k-na) ...
-                  +B*sat(entradas(k-d-1:-1:k-1-nb-d),umin,umax) ...
+                  +B*entradas(k-d-1:-1:k-1-nb-d) ...
                   +Bq*perts(k-dq:-1:k-nbq-dq);    
     
-    %% -- Controlador PID 
-    reffilt(k) = -Fr.den{1}(2:end)*reffilt(k-1:-1:k-nfr) ...
-                      +Fr.num{1}*refs(k:-1:k-nfr);
-
+    %% -- Controlador GPC 
+    %%% referencias
+    rf = af*rfant + (1-af)*refs(k);
+    rfant = rf;
+    R = rf*ones(N,1);
     
-    %%% cálculo do sinal de controle do PID
-    entradas(k) = -Cr.den{1}(2:end)*entradas(k-1:-1:k-ncr)...
-                       +Cr.num{1}*(reffilt(k:-1:k-ncr)-saidas(k:-1:k-ncr));
-                  
-                  
-                  
+    %%% cálculo da resposta livre;
+    saidasC(k) = saidas(k) -C(2:end)*saidasC(k-1:-1:k-nC+1); 
+
+    f = F*saidasC(k:-1:k-nF+1);
+    
+    
+    if(~isempty(H))
+        f = f+ H*duC(k-1:-1:k-nb-d); % parcela dos incrementos de controle
+    end
+    
     %%% cálculo do incremento de controle ótimo
-    du(k) = entradas(k)-entradas(k-1);
+    du(k) = Kmpc1*(R-f);
+    duC(k) = -C(2:end)*duC(k-1:-1:k-nC+1) + du(k) ;
+    
+    %%% cálculo do sinal de controle ótimo
+    entradas(k) = du(k)+entradas(k-1);
     
 end
 
@@ -146,7 +159,7 @@ hold on
 plot(t,refs(vx),'--','LineWidth',tamlinha,'Color',cores(2,:))
 % ylim([0 1.5])
 % h.YTick = [0 0.5 1 1.5];
-hl = legend('PID s/ AW','Referência','Location','NorthEast')
+hl = legend('C(z^{-1})\neq 1','Referência','Location','NorthEast')
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 grid on

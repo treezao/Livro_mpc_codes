@@ -34,9 +34,6 @@ lambda = 1; % ponderação do esforço de controle
 
 af = 0; % polo do filtro de referência
 
-umax = 1.2; % valor de controle máximo
-umin = -1.2; % valor de controle mínimo
-
 %% montagem das matrizes
 Btil = conv(B,[zeros(1,d) 1]); % incorporação do atraso no numerador B
 
@@ -103,31 +100,29 @@ refs(nin+10:end) = 1;
 
 rfant = 0;
 
-reffilt = zeros(nit,1);
-nfr = size(Fr.den{1},2)-1;
-
-ncr = size(Cr.den{1},2)-1;
-
 %% simulação sem filtro de referência
 for k = nin:nit
     %% modelo processo, não mexer
     saidas(k) = -A(2:end)*saidas(k-1:-1:k-na) ...
-                  +B*sat(entradas(k-d-1:-1:k-1-nb-d),umin,umax) ...
+                  +B*entradas(k-d-1:-1:k-1-nb-d) ...
                   +Bq*perts(k-dq:-1:k-nbq-dq);    
     
-    %% -- Controlador PID 
-    reffilt(k) = -Fr.den{1}(2:end)*reffilt(k-1:-1:k-nfr) ...
-                      +Fr.num{1}*refs(k:-1:k-nfr);
-
+    %% -- Controlador GPC 
+    %%% referencias
+    rf = af*rfant + (1-af)*refs(k);
+    rfant = rf;
+    R = rf*ones(N,1);
     
-    %%% cálculo do sinal de controle do PID
-    entradas(k) = -Cr.den{1}(2:end)*entradas(k-1:-1:k-ncr)...
-                       +Cr.num{1}*(reffilt(k:-1:k-ncr)-saidas(k:-1:k-ncr));
-                  
-                  
-                  
-    %%% cálculo do incremento de controle ótimo
-    du(k) = entradas(k)-entradas(k-1);
+    %%% cálculo da resposta livre;
+    f = F*saidas(k:-1:k-na);
+    
+    if(~isempty(H))
+        f = f+ H*du(k-1:-1:k-nb-d); % parcela dos incrementos de controle
+    end
+    
+    %% Resolve o problema de otimização
+    du(k) = Kmpc1*(R-f); % solução sem restrições
+    entradas(k) = entradas(k-1)+du(k);
     
 end
 
@@ -146,7 +141,7 @@ hold on
 plot(t,refs(vx),'--','LineWidth',tamlinha,'Color',cores(2,:))
 % ylim([0 1.5])
 % h.YTick = [0 0.5 1 1.5];
-hl = legend('PID s/ AW','Referência','Location','NorthEast')
+hl = legend('C(z^{-1})=1','Referência','Location','NorthEast')
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 grid on

@@ -27,7 +27,7 @@ nbq = size(Bq,2)-1; % ordem do polinômio Bq
 N1 = 1; %horizonte de predição inicial
 N2 = 15; % horizonte de predição final
 N = N2-N1+1; % horizonte de predição
-Nu = 10; % horizonte de controle
+Nu = 5; % horizonte de controle
 
 delta = 1; % ponderação do erro futuro
 lambda = 1; % ponderação do esforço de controle
