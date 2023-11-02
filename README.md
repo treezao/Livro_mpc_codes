@@ -1,4 +1,4 @@
-# Livro_mpc_cods
+# Livro_mpc_codes
 Códigos do livro Controle Preditivo Baseado em Modelo, volumes 1 e 2.
 
 
