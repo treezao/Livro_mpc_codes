@@ -128,17 +128,18 @@ cores = cores(1:end-1,:);
 %%% plot dos resultados
 hf = figure
 h=subplot(2,1,1)
-plot(t,refs(1:nit-N2-1),'--','Color',cores(1,:),'LineWidth',tamlinha)
+plot(t,saidas(1:nit-N2-1),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
-plot(t,saidas(1:nit-N2-1),'LineWidth',tamlinha,'Color',cores(2,:))
-hl = legend('Referência','Saída','Location','NorthEast')
+plot(t,refs(1:nit-N2-1),'-.','Color',cores(2,:),'LineWidth',tamlinha)
+
+hl = legend('Saída','Referência','Location','NorthEast')
 ylabel('Temperatura (^oC)', 'FontSize', tamletra);
 axis([0 60 0 350]);
 grid on
 set(h, 'FontSize', tamletra);
 
 h=subplot(2,1,2)
-plot(t,entradas(1:nit-N2-1),'LineWidth',tamlinha,'Color',cores(2,:))
+plot(t,entradas(1:nit-N2-1),'LineWidth',tamlinha,'Color',cores(1,:))
 ylabel('Potência (kW)', 'FontSize', tamletra);
 xlabel('Tempo (minutos)', 'FontSize', tamletra);
 axis([0 60 0 450]);
