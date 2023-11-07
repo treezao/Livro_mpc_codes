@@ -8,7 +8,7 @@ run('../../../Bibliotecas/parametrosFiguras.m')
 
 m = 2; % número de entradas da planta - manipuladas
 n = 2; %número de saidas da planta - controladas
-mq = 1;
+mq = 1;% número de entradas da planta - perturbações
 
 s = tf('s');
 % Definir os modelos que relacionam {saida x,entrada y};
@@ -55,7 +55,9 @@ N = N2-N1+1; %horizonte de predição - não editar
 delta = [1 9]./N; %ponderação nos erros - dimensão 1 x n
 lambda = [1 20]./Nu; %ponderação nas ações de controle - dimensão 1 x m       
 
-zf = 0;
+
+%%% filtro do erro de predição
+zf = 0; % zf=0 é sem filtro
 Fe{1} = tf([1 0]*(1-zf),[1 -zf],Ts);
 Fe{2} = Fe{1};
 
