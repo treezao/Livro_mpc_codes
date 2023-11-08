@@ -53,7 +53,7 @@ N2 = [17 31]; % fim dos horizontes de predição - dimensão 1 x n
 N = N2-N1+1; %horizonte de predição - não editar
 
 delta = [1 9]./N; %ponderação nos erros - dimensão 1 x n
-lambda = [1 20]./Nu; %ponderação nas ações de controle - dimensão 1 x m       
+lambda = [1 30]./Nu; %ponderação nas ações de controle - dimensão 1 x m       
 
 
 %%% filtro do erro de predição

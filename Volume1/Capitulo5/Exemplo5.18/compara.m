@@ -105,4 +105,4 @@ ind = find(isgraphics(ax,'Legend'));
 set(gcf,'children',ax([ind:end,1:ind-1]))
 
 
-print('tempo_insuficiente2_v2','-depsc')
+% print('tempo_insuficiente2_v2','-depsc')
