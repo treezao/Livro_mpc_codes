@@ -58,6 +58,7 @@ cores = gray(7);
 cores = cores(1:end-1,:);
 
 hf = figure
+hf.Position = tamfigura3;
 h=subplot(3,1,1)
 plot(t0,saidas0(vx0),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
@@ -91,6 +92,7 @@ ylabel('Manipulada','FontSize', tamletra)
 grid on
 
 set(h, 'FontSize', tamletra);
+h.YTickLabel = trocaponto(h.YTickLabel);
 
 h = subplot(3,1,3)
 plot(t0,du0(vx0),'LineWidth',tamlinha,'Color',cores(1,:))
@@ -109,11 +111,12 @@ ylabel('\Delta u','FontSize', tamletra)
 xlabel('Tempo (amostras)','FontSize', tamletra)
 
 set(h, 'FontSize', tamletra);
+h.YTickLabel = trocaponto(h.YTickLabel);
 
 % hf.Position = tamfigura;
 % hl.Position = [0.6952 0.6683 0.2054 0.1242];
 
-hf.Position = tamfigura3;
+
 hl.Position = [0.7238 0.6671 0.2054 0.0917];
 
 ax = get(gcf,'children');
@@ -121,4 +124,4 @@ ind = find(isgraphics(ax,'Legend'));
 set(gcf,'children',ax([ind:end,1:ind-1]))
 
 
-print('tempo_insuficiente_v2','-depsc')
+% print('tempo_insuficiente_v2','-depsc')

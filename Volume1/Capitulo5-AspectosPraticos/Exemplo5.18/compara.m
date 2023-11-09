@@ -58,6 +58,7 @@ cores = gray(7);
 cores = cores(1:end-1,:);
 
 hf = figure
+hf.Position = tamfigura;
 h=subplot(2,1,1)
 plot(t0,saidas0(vx0),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
@@ -73,6 +74,7 @@ hl = legend('GPC','GPC 1','GPC 2','GPC 3','GPC 4','Referência','Location','Nort
 ylabel('Controlada','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 grid on
+h.YTickLabel = trocaponto(h.YTickLabel);
 
 h = subplot(2,1,2)
 plot(t0,entradas0(vx0),'LineWidth',tamlinha,'Color',cores(1,:))
@@ -93,8 +95,9 @@ grid on
 xlabel('Tempo (segundos)','FontSize', tamletra)
 
 set(h, 'FontSize', tamletra);
+h.YTickLabel = trocaponto(h.YTickLabel);
 
-hf.Position = tamfigura;
+
 hl.Position = [0.7470 0.3651 0.2054 0.3500];
 
 % hf.Position = tamfigura3;
