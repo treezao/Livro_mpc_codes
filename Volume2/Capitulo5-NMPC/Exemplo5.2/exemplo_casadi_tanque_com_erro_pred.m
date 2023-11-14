@@ -1,5 +1,4 @@
-%%% código que utiliza incrementos de controle, mas não tem estimação da
-%%% perturbação não medida... daí não rejeita perts
+%%% código que utiliza incrementos de controle com correção do erro
 
 clear all
 close all
@@ -60,29 +59,31 @@ for k=2:nit
     %%% Controlador NMPC com CasADi
     %% Variáveis de minimização NLP
     opti = casadi.Opti();
-    X = opti.variable(n,N);
     dU = opti.variable(n,N);
     f_custo = 0;
 
     % Inicialização X e dU com os valores atuais (warm start)
     opti.set_initial(dU,0);
-    opti.set_initial(X,xs(k));
     % Montando as restrições e função custo
     U = us(k-1); % variável com o sinal de controle futuro
+    Xant2 = xs(k-1); % variável com o estado em k-1
+    Xant1 = xs(k); % variável com o estado em k
     for j=1:N
-        f_custo = f_custo + (xr(:,k)-X(:,j))'*Qx*(xr(:,k)-X(:,j)) ...
-                     + dU(:,j)'*Qu*dU(:,j);
         Uant = U; % sinal de controle anterior
         U = U + dU(:,j);
-        if(j==1)
-            opti.subject_to(X(:,j) == f_modelo(xs(k),U,qs0) + xs(k) -f_modelo(xs(k-1),Uant,qs0) );
-        elseif(j==2)
-            opti.subject_to(X(:,j) == f_modelo(X(:,j-1),U,qs0) + X(:,j-1) - f_modelo(xs(k),Uant,qs0) );
-        else
-            opti.subject_to(X(:,j) == f_modelo(X(:,j-1),U,qs0) + X(:,j-1) - f_modelo(X(:,j-2),Uant,qs0));
-        end
+        
+        %%% montando predições corrigidas
+        X = f_modelo(Xant1,U,qs0) + Xant1 - f_modelo(Xant2,Uant,qs0);
+
+        %%% atuzliação das variáveis
+        Xant2 = Xant1;
+        Xant1 = X;
+        
+        f_custo = f_custo + (xr(:,k)-X)'*Qx*(xr(:,k)-X) ...
+                     + dU(:,j)'*Qu*dU(:,j);
+
         % Restrições de operação
-        opti.subject_to(Xmin <= X(:,j) <= Xmax);
+        opti.subject_to(Xmin <= X <= Xmax);
         opti.subject_to(Umin <= U <= Umax);
     end
         
@@ -144,4 +145,4 @@ hl0.Position = [0.7310 0.6411 0.2054 0.1242]
 
 hf.Position = tamfigura;
 % print('exemplo_casadi_tanque_com_erro_pred','-depsc')
-        
+%         

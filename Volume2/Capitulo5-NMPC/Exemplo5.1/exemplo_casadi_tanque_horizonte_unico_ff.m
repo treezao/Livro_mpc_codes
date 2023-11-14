@@ -56,26 +56,25 @@ for k=2:nit
     %%% Controlador NMPC com CasADi
     %% Variáveis de minimização NLP
     opti = casadi.Opti();
-    X = opti.variable(n,N);
     dU = opti.variable(n,N);
     f_custo = 0;
 
     % Inicialização X e dU com os valores atuais (warm start)
     opti.set_initial(dU,0);
-    opti.set_initial(X,xs(k));
     % Montando as restrições e função custo
     U = us(k-1); % variável com o sinal de controle futuro
+    Xk = xs(k); % variável com o estado em k
     for j=1:N
-        f_custo = f_custo + (xr(:,k)-X(:,j))'*Qx*(xr(:,k)-X(:,j)) ...
+        %% montando predição
+        U = U + dU(:,j); % sinal de controle
+        X = Xk + K1*qs(k) - K2*U*sqrt(2*g*max(Xk,1e-3)); % iteração do modelo
+        
+        %% montando função custo
+        f_custo = f_custo + (xr(:,k)-X)'*Qx*(xr(:,k)-X) ...
                   + dU(:,j)'*Qu*dU(:,j);
-        U = U + dU(:,j);
-        if(j==1) % na primeira iteração o estado anterior é o estado medido
-            opti.subject_to(X(:,j) == xs(k) + K1*qs(k) - K2*U*sqrt(2*g*max(xs(k),1e-3)));
-        else
-            opti.subject_to(X(:,j) == X(:,j-1) + K1*qs(k) - K2*U*sqrt(2*g*max(X(:,j-1),1e-3)));
-        end
+
         % Restrições de operação
-        opti.subject_to(Xmin<=X(:,j)<=Xmax);
+        opti.subject_to(Xmin<=X<=Xmax);
         opti.subject_to(Umin<=U<=Umax);
     end
         

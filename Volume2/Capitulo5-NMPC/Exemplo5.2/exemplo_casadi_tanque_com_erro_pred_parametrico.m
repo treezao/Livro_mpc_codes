@@ -77,21 +77,32 @@ f_custo = 0;
 
 % Montando as restrições e função custo
 U = Uk1; % variável com o sinal de controle futuro
+Xant2 = Xk1; % variável com o estado em k-1
+Xant1 = Xk; % variável com o estado em k
+Qant1 = Qk1; % variável com a perturbçaão em k-1
+Qa = Qk; % perturbação em k 
 for j=1:N
-    f_custo = f_custo + (Xr-X(:,j))'*Qx*(Xr-X(:,j)) ...
-                 + dU(:,j)'*Qu*dU(:,j);
     Uant = U; % sinal de controle anterior
     U = U + dU(:,j);
-    if(j==1)
-        opti.subject_to(X(:,j) == f_modelo(Xk,U,Qk) + Xk -f_modelo(Xk1,Uant,Qk1) );
-    elseif(j==2)
-        opti.subject_to(X(:,j) == f_modelo(X(:,j-1),U,Qk) + X(:,j-1) - f_modelo(Xk,Uant,Qk) );
-    else
-        opti.subject_to(X(:,j) == f_modelo(X(:,j-1),U,Qk) + X(:,j-1) - f_modelo(X(:,j-2),Uant,Qk));
-    end
+
+    %%% montando predições corrigidas
+    X = f_modelo(Xant1,U,Qa) + Xant1 - f_modelo(Xant2,Uant,Qant1);
+
+    %%% atuzliação das variáveis
+    Xant2 = Xant1;
+    Xant1 = X;
+    
+    Qant1 = Qa;
+    Qa = Qk;
+
+    f_custo = f_custo + (Xr-X)'*Qx*(Xr-X) ...
+                 + dU(:,j)'*Qu*dU(:,j);
+
     % Restrições de operação
-    opti.subject_to(Xmin <= X(:,j) <= Xmax);
-    opti.subject_to(Umin <= U <= Umax);
+    opti.subject_to(Xmin <= X <= Xmax);
+    opti.subject_to(Umin <= U <= Umax);    
+    
+
 end
 
 opti.minimize(f_custo);     % Declarando o objetivo: minimizar f_custo
@@ -124,7 +135,6 @@ for k=2:nit
     
     % Inicialização X e dU com os valores atuais (warm start)
     opti.set_initial(dU,0);
-    opti.set_initial(X,xs(k));
 
     sol = opti.solve();
     % Vetor com os valores do objetivo
