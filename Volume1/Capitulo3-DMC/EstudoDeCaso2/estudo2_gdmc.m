@@ -42,7 +42,7 @@ ymin = -0.05+Cobar; % valor mínimo para a saída
 
 Nss=40; % horizonte de modelo
 Nf = 25; % horizonte de modelo filtrado
-betaf = 0.8; % polo do filtro do gdmc
+betaf = 0.7; % polo do filtro do gdmc
 
 Gcoef = step(G,Ts:Ts:2*Nss*Ts); % coeficientes da resposta ao degrau
 
