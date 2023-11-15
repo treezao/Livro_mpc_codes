@@ -54,7 +54,7 @@ dumin = -dumax;
 %%% Modelo CSTR listado em DU et al 
 n = 2; % numero de saidas
 m = 2; % numero de entradas
-q = 3; % numero de perturbacoes
+mq = 3; % numero de perturbacoes
 
 na = 1; % numero de amostras de y atrasadas usadas no calculo da saida
 nb = 1; % numero de amostras de u atrasadas usadas no calculo da saida
@@ -68,11 +68,11 @@ nq = 1; % numero de amostras de q atrasadas usadas no calculo da saida
 N1 = [1,1]
 N2 = [50, 50]; 
 N2max = max(N2);
-Ni = N2-N1+1;
+N = N2-N1+1;
     
 Nu = [30, 30]; % vetor contendo os horizontes de controle
 
-delta = [1/Ca0^2,100/T0^2]./Ni;
+delta = [1/Ca0^2,100/T0^2]./N;
 lambda = [1/f0^2,1/fc0^2]./Nu;
 
 alpha = 0.85; % polo do filtro de referência
@@ -117,7 +117,7 @@ refs(1,nin+130:end) = 0.1;
 refs(2,nin+190:end) = T0;
 
 
-perts = zeros(q,nit);
+perts = zeros(mq,nit);
 perts(1,:) = CAf0;
 perts(2,:) = Tf0;
 perts(3,:) = Tcf0;
@@ -201,7 +201,7 @@ for k=nin:nit
     %%% passando para o formato vetorial correto
     f = zeros(sum(N2-N1)+1,1);
     for i=1:n
-        f(sum(Ni(1:i-1))+1:sum(Ni(1:i)),1) = yc(i,N1(i):N2(i))';
+        f(sum(N(1:i-1))+1:sum(N(1:i)),1) = yc(i,N1(i):N2(i))';
     end
 
     
@@ -216,11 +216,11 @@ for k=nin:nit
     %%% passando para o formato vetorial correto
     y0v = zeros(sum(N2-N1)+1,1);
     for i=1:n
-        y0v(sum(Ni(1:i-1))+1:sum(Ni(1:i)),1) = y0(i,N1(i):N2(i))';
+        y0v(sum(N(1:i-1))+1:sum(N(1:i)),1) = y0(i,N1(i):N2(i))';
     end
 
     %%% calculo de yi para obter G
-    G = zeros(sum(Ni),sum(Nu));
+    G = zeros(sum(N),sum(Nu));
     for i=1:m
         u0 = entrada(:,k-1);
         
@@ -244,7 +244,7 @@ for k=nin:nit
             %%% passando para o formato vetorial correto
             yiv = zeros(sum(N2-N1+1),1);
             for jj=1:n
-                yiv(sum(Ni(1:jj-1))+1:sum(Ni(1:jj)),1) = yi(jj,N1(jj):N2(jj))';
+                yiv(sum(N(1:jj-1))+1:sum(N(1:jj)),1) = yi(jj,N1(jj):N2(jj))';
             end
             
             G(:,sum(Nu(1:i-1))+j) = (yiv-y0v)/epsilon;
@@ -393,12 +393,12 @@ for k=nin:nit
         %%% passando para o formato vetorial correto
         ybv = zeros(sum(N2-N1)+1,1);
         for i=1:n
-            ybv(sum(Ni(1:i-1))+1:sum(Ni(1:i)),1) = yb(i,N1(i):N2(i))';
+            ybv(sum(N(1:i-1))+1:sum(N(1:i)),1) = yb(i,N1(i):N2(i))';
         end
         
         
         %%% cálculo de Ge
-        Ge = zeros(sum(Ni),sum(Nu));
+        Ge = zeros(sum(N),sum(Nu));
 
         for jj=1:m
             for j=1:Nu(jj)
@@ -418,7 +418,7 @@ for k=nin:nit
                 %%% passando para o formato vetorial correto
                 yotv = zeros(sum(N2-N1)+1,1);
                 for i=1:n
-                    yotv(sum(Ni(1:i-1))+1:sum(Ni(1:i)),1) = yot(i,N1(i):N2(i))';
+                    yotv(sum(N(1:i-1))+1:sum(N(1:i)),1) = yot(i,N1(i):N2(i))';
                 end
 
                 Ge(:,sum(Nu(1:jj-1))+j) = (yotv - ybv)/u0(jj);
@@ -487,99 +487,75 @@ duNEPSAC = du;
 
 
 %% --- Simulação com NMPC
-%%% configurações CASADI
-Ca = MX.sym('Ca',1);
-T = MX.sym('T',1);
-x = [Ca; T];
+%%% configuração do CASADI
+% função do modelo, para facilitar
+f_modelo = @(x,u,q) [x(1) + Ts*(u(1)/V*(q(1)-x(1)) - k0*x(1)*exp(-ER/x(2)));
+                     x(2) + Ts*(u(1)/V*(q(2)-x(2)) + k1*x(1)*exp(-ER/x(2)) + k2*u(2)*(1-exp(-k3/u(2)))*(q(3)-x(2)))];
 
-f = MX.sym('f',1);
-fc = MX.sym('fc',1);
-u = [f;fc];
+                 
+opti = casadi.Opti();   % Chamada da interface "Opti" de Casadi
 
-caf = MX.sym('caf',1);
-tf = MX.sym('tf',1);
-tcf = MX.sym('tcf',1);
-qs = [caf;tf;tcf];
+f_custo = 0;    % Função objetivo
 
-etaca = MX.sym('etaca',1);
-etat = MX.sym('etat',1);
-eta1 = [etaca;etat];
+% Variáveis de otimização do NLP
+X = opti.variable(n, max(N));    % Variável dos estados de k=1 até k=N
+dU = opti.variable(m, max(Nu));   % Variável de control de k=0 até k=Nu
 
-modeloNominal = [Ca+ Ts*(f/V*(caf-Ca) - k0*Ca*exp(-ER/T))+etaca;
-                 T+ Ts*(f/V*(tf-T) + k1*Ca*exp(-ER/T) + k2*fc*(1-exp(-k3/fc))*(tcf-T))+etat];
+% Parâmetros do NLP
+Xr = opti.parameter(n);     % Referência 
+Xk = opti.parameter(n);     % Estado em k
+Xk1 = opti.parameter(n);    % estado em k-1
+Uk1 = opti.parameter(m);     % sinal de controle em k-1
+Qk = opti.parameter(mq);     % Perturbação em k
+Qk1 = opti.parameter(mq);    % perturbação em k-1
 
-fModelo = Function('F',{x,u,qs,eta1},{modeloNominal});
 
-U1 = MX.sym('f',Nu(1),1);
-U2 = MX.sym('fc',Nu(2),1);
-U = [U1{:};U2{:}];
+% montando a função custo e restrições
+f_custo = 0;
 
-eta1 = MX.sym('eta1',max(N2),1);
-eta2 = MX.sym('eta1',max(N2),1);
-
-X0 = MX.sym('X0',2,1);
-U0 = MX.sym('U0',2,1);
-X = [];
-for k=1:max(N2)
-    uk = [];
-    if(k>Nu(1))
-        uk = [uk;U1(Nu(1))];
+% Montando as restrições e função custo
+U = Uk1; % variável com o sinal de controle futuro
+Xant2 = Xk1; % variável com o estado em k-1
+Xant1 = Xk; % variável com o estado em k
+Qant1 = Qk1; % variável com a perturbçaão em k-1
+Qa = Qk; % perturbação em k 
+for j=1:max(N)
+    if(j<=max(Nu))
+        Uant = U; % sinal de controle anterior
+        U = U + dU(:,j);
+        
+        % Restrições de operação
+        opti.subject_to(dumin' <= dU(:,j) <= dumax');
+        opti.subject_to(umin' <= U <= umax');    
     else
-        uk = [uk;U1(k)];
+        Uant = U;
     end
-    if(k>Nu(2))
-        uk = [uk;U2(Nu(2))];
-    else
-        uk = [uk;U2(k)];
-    end    
+
+    %%% montando predições corrigidas
+    X = f_modelo(Xant1,U,Qa) + Xant1 - f_modelo(Xant2,Uant,Qant1);
+
+    %%% atuzliação das variáveis
+    Xant2 = Xant1;
+    Xant1 = X;
     
-    if(k==1)
-        X = [X,fModelo(X0,uk,qs,[eta1(k);eta2(k)])];
-    else
-        X = [X,fModelo(X(:,k-1),uk,qs,[eta1(k);eta2(k)])];
+    Qant1 = Qa;
+    Qa = Qk;
+
+    % monta a função custo
+    f_custo = f_custo + (Xr-X)'*diag(delta)*(Xr-X);
+    
+    if(j<=max(Nu))
+        f_custo = f_custo + dU(:,j)'*diag(lambda)*dU(:,j);
     end
-end
 
-J = 0;
-R = MX.sym('R',2,1);
-for i=1:2
-    for j=N1(i):N2(i)
-        J = J+delta(i)*(R(i)-X(i,j))^2;
-    end
-end
+end                 
 
-lbu = [];
-ubu = [];
-lbdu = [];
-ubdu = [];
-g = {};
+opti.minimize(f_custo);     % Declarando o objetivo: minimizar f_custo
 
-for i=1:2
-    indi = sum(Nu(1:i-1))+1;
-    indf = sum(Nu(1:i));
-    T = tril(ones(Nu(i)));
-    
-    du = inv(T)*(U(indi:indf)-U0(i)*ones(Nu(i),1));
-    
-    for j=1:Nu(i)
-        J = J+ lambda(i)*du(j)^2;
-    end
-    
-    lbu = [lbu;umin(i)*ones(Nu(i),1)];
-    ubu = [ubu;umax(i)*ones(Nu(i),1)];
-    lbdu = [lbdu;dumin(i)*ones(Nu(i),1)];
-    ubdu = [ubdu;dumax(i)*ones(Nu(i),1)];
-    
-    g = {g{:},du};
-    
-end
-    
-
-% Criando solver NLP
-prob = struct('f', J, 'x', vertcat(U{:}), 'g', vertcat(g{:}),'p',vertcat(R{:},X0{:},U0{:},eta1{:},eta2{:},qs{:}));
-opts = struct('verbose',false);
-opts.ipopt.print_level = 0;
-solver = nlpsol('solver', 'ipopt', prob,opts)
+%%% configurações do solver
+solver_opts = struct('warm_start_init_point', 'yes');
+casadi_opts = struct('print_time', false);
+opti.solver('ipopt', casadi_opts, solver_opts);  % Construção do solver
 
 %% config da simulação
 saida = zeros(n,nit);
@@ -597,12 +573,7 @@ du = zeros(m,nit);
 
 rfant = saida(:,1);
 
-u_opt = [];
-for i=1:2
-    u_opt = [u_opt;entrada(i,1)*ones(Nu(i),1)];
-end
-u_opt0 = u_opt;
-
+du_oti_ant = zeros(m,max(Nu));
 %% simulação 
 
 for k=nin:nit
@@ -610,36 +581,28 @@ for k=nin:nit
     saida(:,k) = modeloCSTR(saida(:,k-1),entrada(:,k-1),perts(:,k-1));
 
     %% controlador NMPC com CASADI
-    %%% cálculo da resposta do modelo nominal
-    saidaModelo(:,k) = modeloCSTRnominal(saida(:,k-1),entrada(:,k-1),[CAf0;Tf0;Tcf0]);
-    
-    
-    %%% calculo dos etas futuros
-    eta(:,k) = saida(:,k) - saidaModelo(:,k); % cálculo do eta atual
-    
-    e(k) = -C(2:end)*e(k-1:-1:k-nc+1)'+ D*eta(k:-1:k-nd+1)';
-    
-    for j=1:max(N2)
-        eta(:,k+j) = -D(2:end)*eta(:,k+j-1:-1:k+j-nd+1)' + C*e(:,k+j:-1:k+j-nc+1)';
-    end
-
     %%% referências futuras
     rf = alpha*rfant + (1-alpha)*refs(:,k);
     rfant = rf;
 
+    opti.set_value(Xr,rf);
+    opti.set_value(Xk1,saida(:,k-1));
+    opti.set_value(Xk,saida(:,k));
+    opti.set_value(Uk1,entrada(:,k-1));
+    opti.set_value(Qk,[CAf0;Tf0;Tcf0]);
+    opti.set_value(Qk1,[CAf0;Tf0;Tcf0]);
+    
+    % Inicialização X e dU com os valores atuais (warm start)
+    opti.set_initial(dU,[du_oti_ant(:,1:end-1), zeros(m,1)]);    
 
-    %%% resolvendo problema de otimização
-    p0 = vertcat(rf,saida(:,k),entrada(:,k-1),eta(1,k+1:k+max(N2))',eta(2,k+1:k+max(N2))',perts(:,1));
-
+    % resolve problema de otimização
     tic
-    sol = solver('x0', u_opt,'p',p0, 'lbx', lbu, 'ubx', ubu,'lbg', lbdu, 'ubg', ubdu);
+    sol = opti.solve();
     x2nm(k) = toc;
-    u_opt = full(sol.x);
 
-
-    for i=1:2
-        entrada(i,k) = u_opt(sum(Nu(1:i-1))+1);
-    end
+    du_oti_ant = sol.value(dU); 
+    du(:,k) = sol.value(dU(:,1));
+    entrada(:,k) = entrada(:,k-1) + du(:,k);
     
 end
 
@@ -664,7 +627,7 @@ ind = nin:nit;
 
 
 hf= figure
-hf.Position = [680 383 998 595];
+hf.Position = [680-400 383-300 998 595];
 h=subplot(4,1,1)
 plot(t,saidaPNMPC(1,ind),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
@@ -733,7 +696,7 @@ ind = nin:nit;
 
 
 hf= figure
-hf.Position = [680 383 998 595];
+hf.Position = [680-400 383-300 998 595];
 h=subplot(4,1,1)
 plot(t,saidaPNMPC(1,ind),'LineWidth',tamlinha,'Color',cores(1,:))
 hold on
