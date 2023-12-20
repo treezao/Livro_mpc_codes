@@ -239,7 +239,7 @@ end
 
 
 %%% ajuste do filtro do erro de predição
-a = 0.9;
+a = 0.915;
 b = 0.6;
 Fe = (1-b)/(1-a)*(z-a)/(z-b)
 S = Gnz*(1-z^-d*Fe)
