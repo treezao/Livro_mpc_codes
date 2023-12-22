@@ -490,7 +490,7 @@ hf.Position = tamfigura;
 hl.Position = [0.7680 0.4753 0.2179 0.2387];
 ta1.Position = [0.3075 0.8187 -0.0571 0.0439];
 ta2.Position = [0.7889 0.8497 -0.0629 -0.0465];
-ta3.Position = [0.3418 0.3929 -0.0800 -0.0155];
+ta3.Position = [0.3532 0.3052 -0.0800 -0.0155];
 ta4.Position = [0.4886 0.2086 -0.0668 -0.0273];
 
 % print('tanque_gpc_polic_erro','-depsc')

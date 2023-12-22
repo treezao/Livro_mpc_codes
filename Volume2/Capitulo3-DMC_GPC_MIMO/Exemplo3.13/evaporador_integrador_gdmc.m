@@ -308,7 +308,7 @@ ylabel('Manipuladas','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 grid on
 
-xlabel('Tempo (s)')
+xlabel('Tempo (minutos)')
 
 hf.Position = tamfigura;
 hl.Position = [0.8599 0.5987 0.1154 0.3072];

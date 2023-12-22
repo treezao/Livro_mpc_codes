@@ -98,8 +98,8 @@ N = N2-N1+1; %horizonte de predição - não editar
 Nss = [30 30 30];
 Nf = [30 30 30];
 
-delta = [1 1 1]./N./(x0.^2)'; %ponderação nos erros - dimensão 1 x n
-lambda = [1 1 1]./Nu./(u0.^2)'; %ponderação nas ações de controle - dimensão 1 x m       
+delta = [1 1 1]./N./((x0*0.2).^2)'; %ponderação nos erros - dimensão 1 x n
+lambda = [1 1 1]./Nu./((u0*0.2).^2)'; %ponderação nas ações de controle - dimensão 1 x m       
 betaf = 0.8*[1 1 1]; %% polos dos filtros dos erros de predição por saída
 
 umin = [0, u0(2)-0.4,u0(3)-0.3];
@@ -350,7 +350,7 @@ grid on
 
 set(h, 'FontSize', tamletra);
 
-hf.Position = [680 558 560 420];
+hf.Position = [200 200 560 420];
 
 % ax = get(gcf,'children');
 % ind = find(isgraphics(ax,'Legend'));
@@ -402,7 +402,7 @@ grid on
 xlabel('Tempo (segundos)','FontSize', tamletra)
 set(h, 'FontSize', tamletra);
 
-hf.Position = [680 558 560 420];
+hf.Position = [200 200 560 420];
 
 % ax = get(gcf,'children');
 % ind = find(isgraphics(ax,'Legend'));
