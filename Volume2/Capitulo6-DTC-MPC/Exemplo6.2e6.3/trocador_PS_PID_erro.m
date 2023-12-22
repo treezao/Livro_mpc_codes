@@ -160,7 +160,7 @@ ylabel('Manipulada','FontSize', tamletra)
 grid on
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 hf.Position = tamfigura;
 hl.Position = [0.6720 0.4928 0.2054 0.1806]; 
@@ -195,7 +195,7 @@ ylabel('Manipulada','FontSize', tamletra)
 grid on
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (s)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 
 hl.Position = [0.6774 0.5831 0.2054 0.1806]; 
@@ -217,7 +217,7 @@ semilogx(2*pi/2/Ts*[1 1],[-500 500],'LineWidth',tamlinha,'Color',cores(1,:))
 grid on
 
 hl = legend('PS(K_c=5)','PS(K_c=2)','PID','1/dP','Location','NorthEast')
-xlabel('Frequência (rad/s)','FontSize', tamletra)
+xlabel('Frequência (rad/min)','FontSize', tamletra)
 ylabel('Magnitude (dB)','FontSize', tamletra)
 
 set(h, 'FontSize', tamletra);
@@ -258,7 +258,7 @@ grid on
 xlim([10^-2 3*10^1])
 ylim([-90 45])
 ylabel('Fase (graus)','FontSize', tamletra)
-xlabel('Frequência (rad/s)','FontSize', tamletra)
+xlabel('Frequência (rad/min)','FontSize', tamletra)
 
 
 set(h, 'FontSize', tamletra);

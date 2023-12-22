@@ -336,7 +336,7 @@ xlim([0 40])
 
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 
 
@@ -382,7 +382,7 @@ xlim([0 40])
 
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 
 hl.Position = [0.6810 0.6411 0.2054 0.1806]; 
@@ -428,7 +428,7 @@ ylim([0 0.4])
 
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 
 hl.Position = [0.6935 0.4863 0.2054 0.1806]; 

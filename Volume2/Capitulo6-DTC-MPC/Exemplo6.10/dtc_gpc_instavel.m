@@ -357,6 +357,7 @@ tref = 5;
 ampref = 0.6;
 tpert = 30;
 amppert = -0.2;
+pRuido = 0; % potencia do ruído
 
 %%% caso nominal com d=1 e b=0.9
 S = S1
@@ -460,6 +461,34 @@ y8 = out.simout(1:deltat:end,2);
 u8 = out.simout(1:deltat:end,3);
 
 
+%%% caso erro com d=1 e b=0.9 p=1 com ruido
+S = S1
+Fe = Fe1
+P = Gnz*z^-1
+pRuido = 0.0005
+amppert = 0
+
+out = sim('dtc_gpc_instavel_sim');
+
+t9 = out.tout(1:deltat:end);
+ref9 = out.simout(1:deltat:end,1);
+y9 = out.simout(1:deltat:end,2);
+u9 = out.simout(1:deltat:end,3);
+
+%%% caso erro com d=1 e b=0.9 p=2 com ruido
+S = S1p
+Fe = Fe1p
+P = Gnz*z^-1
+pRuido = 0.0005
+amppert = 0
+
+out = sim('dtc_gpc_instavel_sim');
+
+t10 = out.tout(1:deltat:end);
+ref10 = out.simout(1:deltat:end,1);
+y10 = out.simout(1:deltat:end,2);
+u10 = out.simout(1:deltat:end,3);
+
 
 %%
 cores = gray(4);
@@ -542,3 +571,46 @@ xlabel('Tempo (amostras)','FontSize',tamletra)
 
 hl.Position = [0.6899 0.5103 0.2054 0.1789]; 
 % print('dtc_gpc_instavel_ex_2_erro','-depsc')
+
+
+%%
+%%% figura caso com ruido
+hf = figure
+hf.Position = tamfigura;
+
+h=subplot(3,1,1)
+plot(t9,y9,'LineWidth',tamlinha,'Color',cores(1,:))
+hold on
+plot(t10,y10,'--','LineWidth',tamlinha,'Color',cores(2,:))
+plot(t9,ref9,'-.','LineWidth',tamlinha,'Color',cores(3,:))
+ylim([0 1])
+xlim([0 150])
+hl = legend('p=1','p=2','Referência','Location','SouthEast')
+% hl.Position = [0.6889 0.5943 0.2375 0.1619];
+ylabel(['Controlada'],'FontSize', tamletra)
+set(h, 'FontSize', tamletra);
+grid on
+
+
+h = subplot(3,1,2)
+plot(t9,u9,'LineWidth',tamlinha,'Color',cores(1,:))
+ylim([-0.6 0.6])
+xlim([0 150])
+ylabel(['Manipulada',newline,'p=1'],'FontSize', tamletra)
+set(h, 'FontSize', tamletra);
+grid on
+
+
+h = subplot(3,1,3)
+plot(t10,u10,'--','LineWidth',tamlinha,'Color',cores(2,:))
+ylim([-0.6 0.6])
+xlim([0 150])
+ylabel(['Manipulada',newline,'p=2'],'FontSize', tamletra)
+set(h, 'FontSize', tamletra);
+grid on
+
+
+xlabel('Tempo (amostras)','FontSize',tamletra)
+
+hl.Position = [0.7299 0.6290 0.2054 0.1789]; 
+% print('dtc_gpc_instavel_ex_2_ruido','-depsc')

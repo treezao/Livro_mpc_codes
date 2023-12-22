@@ -245,7 +245,7 @@ ylim([-30 28])
 set(h, 'FontSize', tamletra);
 
 
-xlabel('Frequência (rad/s)','FontSize', tamletra)
+xlabel('Frequência (rad/min)','FontSize', tamletra)
 
 
 set(h, 'FontSize', tamletra);

@@ -122,7 +122,7 @@ ylabel('Manipulada','FontSize', tamletra)
 grid on
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 
 hl.Position = [0.6810 0.6411 0.2054 0.1806]; 
@@ -159,7 +159,7 @@ ylabel('Manipulada','FontSize', tamletra)
 grid on
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 
 hl.Position = [0.6738 0.5863 0.2054 0.1806]; 
 % print('trocador_PS_PID_2','-depsc')

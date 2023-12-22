@@ -336,7 +336,7 @@ xlim([0 25])
 
 set(h, 'FontSize', tamletra);
 
-xlabel('Tempo (segundos)','FontSize',tamletra)
+xlabel('Tempo (minutos)','FontSize',tamletra)
 % h.YTickLabel = trocaponto(h.YTickLabel)
 
 

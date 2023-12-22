@@ -179,7 +179,7 @@ ylim([-30 35])
 set(h, 'FontSize', tamletra);
 
 
-xlabel('Frequência (rad/s)','FontSize', tamletra)
+xlabel('Frequência (rad/min)','FontSize', tamletra)
 
 
 set(h, 'FontSize', tamletra);
