@@ -66,8 +66,8 @@ N1 = [1 1 1 1]; % inicio dos horizontes de predição - incluir atraso - dimens�
 N2 = [50 50 50 50]; % fim dos horizontes de predição - dimensão 1 x n
 N = N2-N1+1; %horizonte de predição - não editar
 
-delta = [1 1 0 0]./N; %ponderação nos erros - dimensão 1 x n
-lambda = [1 1]./Nu; %ponderação nas ações de controle - dimensão 1 x m       
+delta = [1 1 0 0]./N/20^2; %ponderação nos erros - dimensão 1 x n
+lambda = 0.36*[1 1]./Nu/12^2; %ponderação nas ações de controle - dimensão 1 x m       
 
 psi = [0 0 1000 1000]; % ponderação das variáveis de folga
 
