@@ -55,6 +55,9 @@ Ylivre = ones(Nss,1)*0; % 0 é o valor inicial da saída do sistema
 
 %% matrizes para o caso com restrições
 Hqp = 2*(G'*Qy*G+Qu);
+% descomentar e usar apenas se houver algum problema com Hqp não simétrica
+% Hqp = (Hqp+transpose(Hqp))/2 
+
 fqp1 = -2*G'*Qy; 
 
 G1 = [zeros(1,Nu);
